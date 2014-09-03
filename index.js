@@ -24,7 +24,7 @@ WatchChain = function(rootPath, opts) {
         return console.log(("Task '" + task + "' not found.").red);
     }
 
-    this.tasks[task]();
+    this.tasks[task].apply(this);
 }
 
 WatchChain.prototype = {
