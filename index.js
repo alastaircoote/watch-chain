@@ -8,8 +8,15 @@ var minimatch = require('sane/node_modules/minimatch');
 var colors = require('colors');
 var tinylr = require('tiny-lr');
 var yargs = require('yargs');
+var events = require('events');
+//var keypress = require('keypress');
+//keypress(process.stdin);
+//var stdin = process.openStdin(); 
 
 WatchChain = function(rootPath, opts) {
+
+    this.eventEmitter = new events.EventEmitter();
+
     this.rootPath = rootPath;
     this.watches = opts.watch;
     this.tasks = opts.tasks;
@@ -25,9 +32,34 @@ WatchChain = function(rootPath, opts) {
     }
     this.task = task;
     this.tasks[task].apply(this);
+
+    this.sigint = this.sigint.bind(this);
+
+    
+    /*
+    process.stdin.on('keypress', function (chunk, key) {
+        console.log(arguments);
+    });*/
 }
 
 WatchChain.prototype = {
+    on: function(name) {
+        this.eventEmitter.on.apply(this.eventEmitter,arguments);
+        if (name == 'before-exit') {
+            console.log('adding hook',this)
+            process.addListener('SIGINT', this.sigint);
+        }
+    },
+    emit: function() {
+        this.eventEmitter.emit.apply(this.eventEmitter,arguments);
+    },
+    sigint: function() {
+        process.removeListener('SIGINT', this.sigint);
+        this.emit('before-exit');
+    },
+    exit: function() {
+        process.exit();
+    },
     processAll: function() {
 
         var self = this;
@@ -113,7 +145,7 @@ WatchChain.prototype = {
             watcher.on('change', processFile);
             watcher.on('add', processFile);
             watcher.on('delete', processFile);
-            console.log('Watching files...'.yellow)
+            console.log('Watching files...'.yellow);
         });
         
     },
@@ -138,7 +170,6 @@ WatchChain.liveReload = function(path) {
     watcher.on('add', notifyChange);
     watcher.on('delete', notifyChange);
 }
-
 
 
 module.exports = WatchChain;
