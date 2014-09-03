@@ -46,7 +46,6 @@ WatchChain.prototype = {
     on: function(name) {
         this.eventEmitter.on.apply(this.eventEmitter,arguments);
         if (name == 'before-exit') {
-            console.log('adding hook',this)
             process.addListener('SIGINT', this.sigint);
         }
     },
