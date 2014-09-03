@@ -23,7 +23,7 @@ WatchChain = function(rootPath, opts) {
     if (!this.tasks[task]) {
         return console.log(("Task '" + task + "' not found.").red);
     }
-
+    this.task = task;
     this.tasks[task].apply(this);
 }
 
