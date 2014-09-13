@@ -9,9 +9,7 @@ var colors = require('colors');
 var tinylr = require('tiny-lr');
 var yargs = require('yargs');
 var events = require('events');
-//var keypress = require('keypress');
-//keypress(process.stdin);
-//var stdin = process.openStdin(); 
+
 
 WatchChain = function(rootPath, opts) {
 
@@ -20,7 +18,7 @@ WatchChain = function(rootPath, opts) {
     this.rootPath = rootPath;
     this.watches = opts.watch;
     this.tasks = opts.tasks;
-    this.steps = opts.steps;
+    this.transforms = opts.transforms;
 
     var task = yargs.argv._[0];
 
@@ -65,12 +63,15 @@ WatchChain.prototype = {
 
         var mappings = [];
 
+        console.log('Processing all tasks...'.yellow)
+
+
         Object.keys(this.watches).map(function(matchString) {
             var funcs = self.watches[matchString];
             if (typeof(funcs) == 'string') funcs = [funcs];
 
             funcs.forEach(function(func) {
-                if (!self.steps[func]) {
+                if (!self.transforms[func]) {
                     throw new Error("No such step called " + func);
                 }
 
@@ -84,7 +85,7 @@ WatchChain.prototype = {
                 mappings.push({
                     name: func,
                     matchStrings: [matchString],
-                    func: self.steps[func],
+                    func: self.transforms[func],
                     files: []
                 })
             })
@@ -131,11 +132,11 @@ WatchChain.prototype = {
 
                     // If only one
                     if (typeof(self.watches[path]) == 'string') {
-                        return self.steps[self.watches[path]]([filepath]);
+                        return self.transforms[self.watches[path]]([filepath]);
                     }
 
                     Promise.each(self.watches[path], function(funcName){
-                        self.steps[funcName]([filepath]);
+                        self.transforms[funcName]([filepath]);
                     });
                     //self.watches[path]([filepath]);
                 })
@@ -169,6 +170,10 @@ WatchChain.liveReload = function(path) {
     watcher.on('add', notifyChange);
     watcher.on('delete', notifyChange);
 }
+
+WatchChain.transforms = {
+    less: require('./transforms/less')
+};
 
 
 module.exports = WatchChain;

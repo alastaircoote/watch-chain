@@ -11,6 +11,7 @@
   "dependencies": {
     "bluebird": "^2.3.0",
     "colors": "^0.6.2",
+    "fs.extra": "^1.2.1",
     "node-dir": "^0.1.6",
     "recursive-readdir": "^1.2.0",
     "sane": "^0.6.0",
