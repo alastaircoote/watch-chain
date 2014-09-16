@@ -5,8 +5,7 @@ var path = require('path');
 module.exports = function(file, opts) {
     var less = require('less');
     var Autoprefixer = require('autoprefixer');
-
-    if (!opts) opts = {}
+    if (!opts) opts = {};
 
     return fs.readFileAsync(file,'UTF-8')
     .then(function(lessContent) {
@@ -30,6 +29,8 @@ module.exports = function(file, opts) {
     })
     .then(function(unprefixedCSS){
         return Autoprefixer({browsers:["last 2 versions","IE 9"]}).process(unprefixedCSS).css
+
     })
+    
 
 }

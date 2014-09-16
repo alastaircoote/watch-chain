@@ -1,4 +1,5 @@
 var Promise = require('bluebird');
+Promise.longStackTraces()
 var recursiveReadDir = Promise.promisify(require('recursive-readdir'));
 var sane = require('sane');
 var path = require('path');
@@ -14,6 +15,7 @@ var events = require('events');
 WatchChain = function(rootPath, opts) {
 
     this.eventEmitter = new events.EventEmitter();
+    this.sigint = this.sigint.bind(this);
 
     this.rootPath = rootPath;
     this.watches = opts.watch;
@@ -29,9 +31,15 @@ WatchChain = function(rootPath, opts) {
         return console.log(("Task '" + task + "' not found.").red);
     }
     this.task = task;
-    this.tasks[task].apply(this);
+    var result = this.tasks[task].apply(this)
+    if (result instanceof Promise) {
+        result.catch(function(err) {
+            console.log(('Transform "' + err.transformName + '" failed with error:').red)
+            console.log(err.stack);
+        });
+    }
 
-    this.sigint = this.sigint.bind(this);
+   
 
     
     /*
@@ -63,7 +71,7 @@ WatchChain.prototype = {
 
         var mappings = [];
 
-        console.log('Processing all tasks...'.yellow)
+        console.log('Processing all transforms...'.yellow)
 
 
         Object.keys(this.watches).map(function(matchString) {
@@ -92,10 +100,10 @@ WatchChain.prototype = {
    
         });
 
-        return recursiveReadDir(this.rootPath,[
+        var p = recursiveReadDir(this.rootPath,[
             this.rootPath + '/node_modules/**',
             '**/.**',
-        ])
+        ]).cancellable()
         .each(function(file) {
             file = path.relative(self.rootPath,file);
 
@@ -110,12 +118,24 @@ WatchChain.prototype = {
         })
         .then(function() {
             return Promise.each(mappings, function(mapping) {
-                return mapping.func(mapping.files);
+                //if (mapping.func.resolve) return mapping.func.resolve()
+               
+                //return Promise.resolve(mapping.func)
+                var result = mapping.func(mapping.files, Promise)
+                //if (result instanceof Promise) {
+                    result.catch(function(err) {
+                        err.transformName = mapping.name;
+                        throw err;
+                    })
+                //}
+                
             })
         })
         .then(function() {
             console.log('Processing complete.'.green)
         })
+
+        return p;
         
     },
     watch: function() {
@@ -132,11 +152,11 @@ WatchChain.prototype = {
 
                     // If only one
                     if (typeof(self.watches[path]) == 'string') {
-                        return self.transforms[self.watches[path]]([filepath]);
+                        return self.transforms[self.watches[path]]([filepath],Promise);
                     }
 
                     Promise.each(self.watches[path], function(funcName){
-                        self.transforms[funcName]([filepath]);
+                        self.transforms[funcName]([filepath],Promise);
                     });
                     //self.watches[path]([filepath]);
                 })
@@ -171,9 +191,24 @@ WatchChain.liveReload = function(path) {
     watcher.on('delete', notifyChange);
 }
 
+WatchChain.liveReload.jsSnippet = '<script>document.write(\'<script src="http://\' + (location.host || \'localhost\').split(\':\')[0] + \':35729/livereload.js?snipver=1"></\' + \'script>\')</script>'
+
 WatchChain.transforms = {
-    less: require('./transforms/less')
+    less: require('./transforms/less'),
+    coffeescript: require('./transforms/coffee-script')
 };
+
+WatchChain.io = require('./io');
+
+WatchChain.exec = function(path) {
+    var child = require('child_process').exec(path);
+    child.stdout.pipe(process.stdout);
+}
+
+WatchChain.execModule = function(path,args) {
+    return require('child_process').fork(path,args);
+    //child.stdout.pipe(process.stdout);
+}
 
 
 module.exports = WatchChain;
