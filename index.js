@@ -103,7 +103,7 @@ WatchChain.prototype = {
         var p = recursiveReadDir(this.rootPath,[
             this.rootPath + '/node_modules/**',
             '**/.**',
-        ]).cancellable()
+        ])
         .each(function(file) {
             file = path.relative(self.rootPath,file);
 
@@ -128,6 +128,7 @@ WatchChain.prototype = {
                         throw err;
                     })
                 //}
+                return result;
                 
             })
         })
