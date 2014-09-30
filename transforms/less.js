@@ -3,6 +3,10 @@ var fs = Promise.promisifyAll(require('fs.extra'));
 var path = require('path');
 
 module.exports = function(file, opts) {
+    var self = this;
+    if (this.rootPath) {
+        file = path.join(this.rootPath,file);
+    }
     var less = require('less');
     var Autoprefixer = require('autoprefixer');
     if (!opts) opts = {};

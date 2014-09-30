@@ -1,18 +1,18 @@
 {
   "name": "watch-chain",
-  "version": "0.0.0",
-  "description": "",
+  "version": "0.0.4",
+  "description": "A file watcher and build system. A work in progress.",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "scripts": {},
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "autoprefixer": "^3.1.0",
     "bluebird": "^2.3.0",
     "coffee-script": "^1.8.0",
     "colors": "^0.6.2",
     "fs.extra": "^1.2.1",
+    "handlebars": "^2.0.0",
     "node-dir": "^0.1.6",
     "recursive-readdir": "^1.2.0",
     "sane": "^0.6.0",

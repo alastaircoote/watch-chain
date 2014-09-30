@@ -13,7 +13,7 @@ var events = require('events');
 
 
 WatchChain = function(rootPath, opts) {
-
+    var self = this;
     this.eventEmitter = new events.EventEmitter();
     this.sigint = this.sigint.bind(this);
 
@@ -39,7 +39,10 @@ WatchChain = function(rootPath, opts) {
         });
     }
 
-   
+    this.compilers = {}
+    for (key in WatchChain.compilers) {
+        this.compilers[key] = WatchChain.compilers[key].bind(this);
+    }
 
     
     /*
@@ -121,7 +124,7 @@ WatchChain.prototype = {
                 //if (mapping.func.resolve) return mapping.func.resolve()
                
                 //return Promise.resolve(mapping.func)
-                var result = mapping.func(mapping.files, Promise)
+                var result = mapping.func.apply(self,[mapping.files, Promise])
                 //if (result instanceof Promise) {
                     result.catch(function(err) {
                         err.transformName = mapping.name;
@@ -153,6 +156,7 @@ WatchChain.prototype = {
 
                     // If only one
                     if (typeof(self.watches[path]) == 'string') {
+                        console.log(self.transforms)
                         return self.transforms[self.watches[path]]([filepath],Promise);
                     }
 
@@ -183,20 +187,21 @@ WatchChain.liveReload = function(path) {
         console.log('LiveReload is watching:\t'.green + path)
     });
     var watcher = sane(path,'**/*.*',{persistent:true});
-    var notifyChange = function(filepath) {
+    this.notifyChange = function(filepath) {
         console.log('Reloading:\t\t'.yellow + filepath)
         tinylr.changed(filepath);
     };
-    watcher.on('change', notifyChange);
-    watcher.on('add', notifyChange);
-    watcher.on('delete', notifyChange);
+    watcher.on('change', this.notifyChange);
+    watcher.on('add', this.notifyChange);
+    watcher.on('delete', this.notifyChange);
 }
 
 WatchChain.liveReload.jsSnippet = '<script>document.write(\'<script src="http://\' + (location.host || \'localhost\').split(\':\')[0] + \':35729/livereload.js?snipver=1"></\' + \'script>\')</script>'
 
-WatchChain.transforms = {
+WatchChain.compilers = {
     less: require('./transforms/less'),
-    coffeescript: require('./transforms/coffee-script')
+    coffeescript: require('./transforms/coffee-script'),
+    handlebars: require('./transforms/handlebars')
 };
 
 WatchChain.io = require('./io');
