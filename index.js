@@ -35,7 +35,7 @@ WatchChain = function(rootPath, opts) {
     if (result instanceof Promise) {
         result.catch(function(err) {
             console.log(('Transform "' + err.transformName + '" failed with error:').red)
-            console.log(err.stack);
+            console.log(err);
         });
     }
 
@@ -68,7 +68,13 @@ WatchChain.prototype = {
     exit: function() {
         process.exit();
     },
-    processAll: function() {
+    process: function(tasks) {
+        if (typeof tasks == 'string') {
+            tasks = [tasks];
+        }
+        return this.processAll(tasks);
+    },
+    processAll: function(tasks) {
 
         var self = this;
 
@@ -84,6 +90,10 @@ WatchChain.prototype = {
             funcs.forEach(function(func) {
                 if (!self.transforms[func]) {
                     throw new Error("No such step called " + func);
+                }
+                if (tasks && tasks.indexOf(func) == -1) {
+                    // We have the option of specifying which tasks we want to run
+                    return
                 }
 
                 // See if the step has already been established- if so we just append to it
@@ -120,23 +130,37 @@ WatchChain.prototype = {
             
         })
         .then(function() {
-            return Promise.each(mappings, function(mapping) {
+            return Promise.map(mappings, function(mapping) {
                 //if (mapping.func.resolve) return mapping.func.resolve()
                
                 //return Promise.resolve(mapping.func)
                 var result = mapping.func.apply(self,[mapping.files, Promise])
-                //if (result instanceof Promise) {
-                    result.catch(function(err) {
+                if (result instanceof Promise) {
+                    /*result = result.catch(function(err) {
                         err.transformName = mapping.name;
                         throw err;
+                    })*/
+                    return result.then(function(r) {
+                         return {
+                            name: mapping.name,
+                            result: r
+                        }
                     })
-                //}
-                return result;
-                
+                } else {
+                    return {
+                        name: mapping.name,
+                        result: result
+                    }
+                }
             })
         })
-        .then(function() {
-            console.log('Processing complete.'.green)
+        .then(function(mapResults) {
+            console.log('Processing complete.'.green);
+            resultsHash = {}
+            mapResults.forEach(function(r){
+                resultsHash[r.name] = r.result
+            });
+            return resultsHash;
         })
 
         return p;
@@ -145,7 +169,7 @@ WatchChain.prototype = {
     watch: function() {
         var self = this;
         return this.processAll()
-        .then(function() {
+        .then(function(mapResults) {
             var paths = Object.keys(self.watches);
             var watcher = sane(self.rootPath, Object.keys(self.watches),{persistent: true});
             
@@ -156,7 +180,6 @@ WatchChain.prototype = {
 
                     // If only one
                     if (typeof(self.watches[path]) == 'string') {
-                        console.log(self.transforms)
                         return self.transforms[self.watches[path]]([filepath],Promise);
                     }
 
@@ -171,6 +194,7 @@ WatchChain.prototype = {
             watcher.on('add', processFile);
             watcher.on('delete', processFile);
             console.log('Watching files...'.yellow);
+            return mapResults;
         });
         
     },
@@ -205,6 +229,7 @@ WatchChain.compilers = {
 };
 
 WatchChain.io = require('./io');
+WatchChain.s3 = require('./aws');
 
 WatchChain.exec = function(path) {
     var child = require('child_process').exec(path);
