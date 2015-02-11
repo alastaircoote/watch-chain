@@ -51,7 +51,7 @@ module.exports = {
                     Body: contents,
                     ACL: 'public-read',
                     ContentType: mime.lookup(file.path),
-                    CacheControl: 'public, max-age=' + opts.maxAge
+                    CacheControl: 'public, max-age=' + file.fileType.maxAge
                 };
                 if (file.fileType.gzip) {
                     params.ContentEncoding = 'gzip';

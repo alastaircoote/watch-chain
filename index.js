@@ -35,7 +35,7 @@ WatchChain = function(rootPath, opts) {
     if (result instanceof Promise) {
         result.catch(function(err) {
             console.log(('Transform "' + err.transformName + '" failed with error:').red)
-            console.log(err);
+            console.log(err.stack);
         });
     }
 
@@ -72,7 +72,14 @@ WatchChain.prototype = {
         if (typeof tasks == 'string') {
             tasks = [tasks];
         }
-        return this.processAll(tasks);
+        return this.processAll(tasks)
+        .then(function(results){
+            if (tasks.length == 1) {
+                return results[tasks[0]];
+            } else {
+                return results;
+            }
+        })
     },
     processAll: function(tasks) {
 
@@ -80,7 +87,11 @@ WatchChain.prototype = {
 
         var mappings = [];
 
-        console.log('Processing all transforms...'.yellow)
+        if (!tasks) {
+            console.log("Processing all transforms...".yellow)
+        } else {
+            console.log(('Processing transforms: ' + tasks.join(', ') + "...").yellow)
+        }
 
 
         Object.keys(this.watches).map(function(matchString) {
@@ -206,8 +217,8 @@ WatchChain.prototype = {
     }
 }
 
-WatchChain.liveReload = function(path) {
-    tinylr().listen(35729, function() {
+WatchChain.liveReload = function(path, port) {
+    tinylr().listen(port || 35729, function() {
         console.log('LiveReload is watching:\t'.green + path)
     });
     var watcher = sane(path,'**/*.*',{persistent:true});
@@ -221,6 +232,9 @@ WatchChain.liveReload = function(path) {
 }
 
 WatchChain.liveReload.jsSnippet = '<script>document.write(\'<script src="http://\' + (location.host || \'localhost\').split(\':\')[0] + \':35729/livereload.js?snipver=1"></\' + \'script>\')</script>'
+WatchChain.liveReload.js = function(port) {
+    return '<script>document.write(\'<script src="http://\' + (location.host || \'localhost\').split(\':\')[0] + \':' + (port || 35729) + '/livereload.js?snipver=1"></\' + \'script>\')</script>'
+}
 
 WatchChain.compilers = {
     less: require('./transforms/less'),
