@@ -238,6 +238,7 @@ WatchChain.liveReload.js = function(port) {
 
 WatchChain.compilers = {
     less: require('./transforms/less'),
+    sass: require('./transforms/sass'),
     coffeescript: require('./transforms/coffee-script'),
     handlebars: require('./transforms/handlebars')
 };
@@ -254,6 +255,8 @@ WatchChain.execModule = function(path,args) {
     return require('child_process').fork(path,args);
     //child.stdout.pipe(process.stdout);
 }
+
+WatchChain.args = yargs.argv
 
 
 module.exports = WatchChain;

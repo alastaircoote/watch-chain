@@ -50,9 +50,14 @@ module.exports = {
                     Key: destinationPath,
                     Body: contents,
                     ACL: 'public-read',
-                    ContentType: mime.lookup(file.path),
-                    CacheControl: 'public, max-age=' + file.fileType.maxAge
+                    ContentType: mime.lookup(file.path)
+                    
                 };
+                if (file.fileType.maxAge == -1) {
+                    params.CacheControl = 'no-cache, no-store, must-revalidate'
+                } else {
+                    params.CacheControl = 'public, max-age=' + file.fileType.maxAge
+                }
                 if (file.fileType.gzip) {
                     params.ContentEncoding = 'gzip';
                 }

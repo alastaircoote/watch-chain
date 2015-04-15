@@ -1,6 +1,6 @@
 {
   "name": "watch-chain",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A file watcher and build system. A work in progress.",
   "main": "index.js",
   "scripts": {},
@@ -16,6 +16,7 @@
     "handlebars": "^2.0.0",
     "mime": "^1.2.11",
     "node-dir": "^0.1.6",
+    "node-sass": "^2.1.1",
     "recursive-readdir": "^1.2.0",
     "sane": "^0.6.0",
     "tiny-lr": "^0.1.0",
