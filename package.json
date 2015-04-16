@@ -1,6 +1,6 @@
 {
   "name": "watch-chain",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "A file watcher and build system. A work in progress.",
   "main": "index.js",
   "scripts": {},

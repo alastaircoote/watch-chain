@@ -35,7 +35,7 @@ WatchChain = function(rootPath, opts) {
     if (result instanceof Promise) {
         result.catch(function(err) {
             console.log(('Transform "' + err.transformName + '" failed with error:').red)
-            console.log(err.stack);
+            console.log(err);
         });
     }
 
@@ -147,10 +147,10 @@ WatchChain.prototype = {
                 //return Promise.resolve(mapping.func)
                 var result = mapping.func.apply(self,[mapping.files, Promise])
                 if (result instanceof Promise) {
-                    /*result = result.catch(function(err) {
+                    result = result.catch(function(err) {
                         err.transformName = mapping.name;
                         throw err;
-                    })*/
+                    })
                     return result.then(function(r) {
                          return {
                             name: mapping.name,

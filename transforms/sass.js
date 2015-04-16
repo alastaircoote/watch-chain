@@ -10,25 +10,21 @@ module.exports = function(file, opts) {
     
     if (!opts) opts = {};
 
-    return fs.readFileAsync(file,'UTF-8')
-    .then(function(lessContent) {
-        opts.path = file
-        return module.exports.raw(lessContent, opts);
-    })
-}
-
-module.exports.raw = function(sassContent, opts) {
     var sass = require('node-sass');
     var Autoprefixer = require('autoprefixer');
+
     return new Promise(function(fullfill,reject) {
-
-        return sass.renderSync({
-            data: sassContent,
-            includePaths: [path.dirname(opts.path)]
-        })
-
+        return sass.render({
+            file: file,
+            success: fullfill,
+            error: reject
+        });
     })
+    /*.catch(function(error){
+        console.log(error)
+    })*/
     .then(function(unprefixedCSS){
-        return Autoprefixer({browsers:["last 2 versions","IE 9"]}).process(unprefixedCSS).css
-    })
+        return Autoprefixer({browsers:["last 2 versions","IE 9"]}).process(unprefixedCSS.css).css
+    });
+
 }
