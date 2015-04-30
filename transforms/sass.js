@@ -9,6 +9,7 @@ module.exports = function(file, opts) {
     }
     
     if (!opts) opts = {};
+    if (!opts.includePaths) opts.includePaths = [];
 
     var sass = require('node-sass');
     var Autoprefixer = require('autoprefixer');
@@ -17,7 +18,8 @@ module.exports = function(file, opts) {
         return sass.render({
             file: file,
             success: fullfill,
-            error: reject
+            error: reject,
+            includePaths: opts.includePaths
         });
     })
     /*.catch(function(error){
